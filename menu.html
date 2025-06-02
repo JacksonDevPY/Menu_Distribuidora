@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menu Online</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1, h2 {
+            color: #0056b3;
+            text-align: center;
+        }
+        .categoria {
+            margin-bottom: 30px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 20px;
+        }
+        .categoria:last-child {
+            border-bottom: none;
+        }
+        .produto {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px dotted #ccc;
+        }
+        .produto:last-child {
+            border-bottom: none;
+        }
+        .produto-info {
+            flex-grow: 1;
+        }
+        .produto-nome {
+            font-weight: bold;
+        }
+        .produto-preco {
+            color: #28a745;
+        }
+        .adicionar-btn {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+        .adicionar-btn:hover {
+            background-color: #0069d9;
+        }
+        .carrinho-flutuante {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #28a745;
+            color: white;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            font-size: 1.2em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Menu Online</h1>
+        
+        {% for categoria, produtos in menu.items() %}
+        <div class="categoria">
+            <h2>{{ categoria.capitalize() }}</h2>
+            
+            {% for produto in produtos %}
+            <div class="produto">
+                <div class="produto-info">
+                    <div class="produto-nome">{{ produto.nome }}</div>
+                    <div class="produto-preco">R$ {{ "%.2f"|format(produto.preco) }}</div>
+                </div>
+                <form action="/adicionar" method="post">
+                    <input type="hidden" name="produto_id" value="{{ produto.id }}">
+                    <button type="submit" class="adicionar-btn">Adicionar</button>
+                </form>
+            </div>
+            {% endfor %}
+        </div>
+        {% endfor %}
+    </div>
+
+    <a href="/carrinho" class="carrinho-flutuante">
+        🛒
+        {% if carrinho %}
+            <span style="position: absolute; top: -5px; right: -5px; background: red; border-radius: 50%; width: 20px; height: 20px; font-size: 0.7em; display: flex; align-items: center; justify-content: center;">
+                {{ carrinho.values() | sum }}
+            </span>
+        {% endif %}
+    </a>
+</body>
+</html>
+
