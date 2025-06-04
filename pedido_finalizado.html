@@ -1,54 +1,13 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pedido Finalizado!</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            background-color: #f4f4f4;
-            color: #333;
-            text-align: center;
-        }
-        .container {
-            max-width: 600px;
-            margin: auto;
-            background: #fff;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        h1 {
-            color: #28a745;
-            margin-bottom: 20px;
-        }
-        p {
-            font-size: 1.1em;
-            margin: 15px 0;
-        }
-        .whatsapp-btn {
-            display: inline-block;
-            margin-top: 20px;
-            padding: 15px 25px;
-            background-color: #25D366;
-            color: white;
-            text-decoration: none;
-            border-radius: 5px;
-            font-weight: bold;
-            font-size: 1.1em;
-        }
-        .whatsapp-btn:hover {
-            background-color: #128C7E;
-        }
-    </style>
+    <!-- ... (código existente) ... -->
 </head>
 <body>
     <div class="container">
         <h1>Pedido Finalizado!</h1>
         <p>Obrigado pelo seu pedido!</p>
-        <p>Clique no botão abaixo para enviar seu pedido via WhatsApp e concluir a compra:</p>
+        <p>Clique no botão abaixo para enviar seu pedido via WhatsApp:</p>
         
         <a href="{{ link_whatsapp }}" class="whatsapp-btn" target="_blank">
             Enviar Pedido pelo WhatsApp
@@ -60,4 +19,3 @@
     </div>
 </body>
 </html>
-
