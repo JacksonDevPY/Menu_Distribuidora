@@ -1,14 +1,17 @@
 from flask import Flask, render_template, request, session, redirect, url_for
 import urllib.parse
 import os
+from dotenv import load_dotenv
+
+load_dotenv()  # Carrega variáveis de ambiente
 
 app = Flask(__name__)
 
 # Configurações
-app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'sua_chave_secreta_pode_ser_qualquer_coisa_se_estiver_em_dev')
+app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'dev_secret_123')
 NUMERO_WHATSAPP_LOJA = os.environ.get('WHATSAPP_NUMBER', "5594991569871")
 
-# Menu de produtos
+# Menu de produtos (estrutura otimizada)
 MENU = {
     'cervejas': [
         {'id': 1, 'nome': 'Brahma Duplo Malte 350ml', 'preco': 3.50},
@@ -26,12 +29,8 @@ MENU = {
     ]
 }
 
-def encontrar_produto_por_id(produto_id):
-    for categoria in MENU.values():
-        for produto in categoria:
-            if produto['id'] == produto_id:
-                return produto
-    return None
+# Cache de produtos para busca rápida
+PRODUTOS = {prod['id']: prod for categoria in MENU.values() for prod in categoria}
 
 @app.route('/')
 def mostrar_menu():
@@ -41,25 +40,27 @@ def mostrar_menu():
 def adicionar_ao_carrinho():
     produto_id = int(request.form['produto_id'])
     
-    if 'carrinho' not in session:
-        session['carrinho'] = {}
-        
-    carrinho = session['carrinho']
-    carrinho[str(produto_id)] = carrinho.get(str(produto_id), 0) + 1
-    session.modified = True
+    carrinho = session.get('carrinho', {})
+    chave = str(produto_id)
+    
+    # Atualiza quantidade
+    carrinho[chave] = carrinho.get(chave, 0) + 1
+    session['carrinho'] = carrinho
+    
     return redirect(url_for('mostrar_menu'))
 
 @app.route('/remover/<int:produto_id>')
 def remover_do_carrinho(produto_id):
     carrinho = session.get('carrinho', {})
-    produto_str = str(produto_id)
+    chave = str(produto_id)
     
-    if produto_str in carrinho:
-        if carrinho[produto_str] > 1:
-            carrinho[produto_str] -= 1
+    if chave in carrinho:
+        if carrinho[chave] > 1:
+            carrinho[chave] -= 1
         else:
-            del carrinho[produto_str]
-        session.modified = True
+            del carrinho[chave]
+        
+        session['carrinho'] = carrinho
     
     return redirect(url_for('ver_carrinho'))
 
@@ -70,7 +71,7 @@ def ver_carrinho():
     total_pedido = 0.0
     
     for produto_id, quantidade in carrinho.items():
-        produto = encontrar_produto_por_id(int(produto_id))
+        produto = PRODUTOS.get(int(produto_id))
         if produto:
             subtotal = produto['preco'] * quantidade
             total_pedido += subtotal
@@ -80,34 +81,43 @@ def ver_carrinho():
                 'subtotal': subtotal
             })
     
-    return render_template('carrinho.html', itens_carrinho=itens_carrinho, total_pedido=total_pedido)
+    return render_template('carrinho.html', 
+                           itens_carrinho=itens_carrinho, 
+                           total_pedido=total_pedido)
 
 @app.route('/finalizar', methods=['POST'])
 def finalizar_pedido():
-    nome_cliente = request.form['nome']
-    endereco_cliente = request.form['endereco']
+    nome_cliente = request.form['nome'].strip()
+    endereco_cliente = request.form['endereco'].strip()
     carrinho = session.get('carrinho', {})
     
-    if not carrinho:
+    if not carrinho or not nome_cliente or not endereco_cliente:
         return redirect(url_for('mostrar_menu'))
     
-    mensagem = f"*NOVO PEDIDO*\\n\\n*Cliente:* {nome_cliente}\\n*Endereço:* {endereco_cliente}\\n\\n*Itens:*\\n"
-    total_pedido = 0
+    # Formata mensagem para WhatsApp
+    mensagem = (
+        f"*NOVO PEDIDO*\n\n"
+        f"*Cliente:* {nome_cliente}\n"
+        f"*Endereço:* {endereco_cliente}\n\n"
+        f"*Itens:*\n"
+    )
     
+    total_pedido = 0.0
     for produto_id, quantidade in carrinho.items():
-        produto = encontrar_produto_por_id(int(produto_id))
+        produto = PRODUTOS.get(int(produto_id))
         if produto:
             subtotal = produto['preco'] * quantidade
             total_pedido += subtotal
-            mensagem += f"- {produto['nome']} ({quantidade}x): R${subtotal:.2f}\\n"
+            mensagem += f"- {produto['nome']} ({quantidade}x): R${subtotal:.2f}\n"
     
-    mensagem += f"\\n*TOTAL: R${total_pedido:.2f}*"
+    mensagem += f"\n*TOTAL: R${total_pedido:.2f}*"
     mensagem_codificada = urllib.parse.quote(mensagem)
     
+    # Limpa carrinho após finalização
     session.pop('carrinho', None)
     link_whatsapp = f"https://wa.me/{NUMERO_WHATSAPP_LOJA}?text={mensagem_codificada}"
+    
     return render_template('pedido_finalizado.html', link_whatsapp=link_whatsapp)
 
 if __name__ == '__main__':
     app.run(debug=True)
-
